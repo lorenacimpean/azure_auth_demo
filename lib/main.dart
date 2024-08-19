@@ -38,15 +38,18 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   static const tenantName = 'rmsvc';
+  static const tenantBaseUrl = 'https://$tenantName.b2clogin.com';
   static const policyName = 'B2C_1_RMSVC';
   static const clientId = 'bcc3bf7a-a732-4750-a444-468986574241';
+  //TODO: add tenant ID and test
+  static const String tenantID = '';
 
   static final Config config = Config(
-    isB2C: true,
-    tenant: tenantName,
+    isB2C: false,
+    tenant: tenantID,
     policy: policyName,
     clientId: clientId,
-    scope: '$clientId profile offline_access',
+    scope: 'profile openid',
     navigatorKey: navigatorKey,
     loader: const SizedBox(),
     appBar: AppBar(
@@ -55,7 +58,6 @@ class _MyHomePageState extends State<MyHomePage> {
     onPageFinished: (String url) {
       log('onPageFinished: $url');
     },
-
   );
   final AadOAuth oauth = AadOAuth(config);
 
@@ -125,9 +127,9 @@ class _MyHomePageState extends State<MyHomePage> {
     config.webUseRedirect = redirect;
     final result = await oauth.login();
     result.fold(
-      (l) async => await showError(l.toString()),
-      (r) async =>
-          await showMessage('Logged in successfully, your access token: $r'),
+      (error) async => await showError(error.toString()),
+      (token) async => await showMessage(
+          'Logged in successfully, your access token: $token'),
     );
     String? accessToken = await oauth.getAccessToken();
     log('Access token: $accessToken');
@@ -141,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> hasCachedAccountInformation() async {
-    var hasCachedAccountInformation = await oauth.hasCachedAccountInformation;
+    bool hasCachedAccountInformation = await oauth.hasCachedAccountInformation;
     if (mounted) {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
